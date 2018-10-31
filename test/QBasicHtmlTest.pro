@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-include($$PWD/../QBasicHtml.pro)
+include($$PWD/../QBasicHtmlExporter.pro)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

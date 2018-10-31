@@ -1,4 +1,4 @@
-#include "qbasichtml.h"
+#include "qbasichtmlexporter.h"
 #include <QDebug>
 #include <QTextDocument>
 #include <QTextList>
@@ -34,6 +34,34 @@ QString QBasicHtmlExporter::toHtml()
     emitFrame(doc->rootFrame()->begin());
 
     return html;
+}
+
+QBasicHtmlExporter::Heading QBasicHtmlExporter::headingType(QString name)
+{
+    if (QString::compare(name, "xx-large", Qt::CaseInsensitive)) return h1;
+    if (QString::compare(name, "x-large", Qt::CaseInsensitive))  return h2;
+    if (QString::compare(name, "large", Qt::CaseInsensitive))    return h3;
+    if (QString::compare(name, "medium", Qt::CaseInsensitive))   return h4;
+    if (QString::compare(name, "small", Qt::CaseInsensitive))    return h5;
+    return paragraph;
+}
+
+QString QBasicHtmlExporter::headingStr(QBasicHtmlExporter::Heading heading)
+{
+    switch (heading) {
+    case h1:
+        return "h1";
+    case h2:
+        return "h2";
+    case h3:
+        return "h3";
+    case h4:
+        return "h4";
+    case h5:
+        return "h5";
+    default:
+        return "p";
+    }
 }
 
 void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
@@ -229,6 +257,8 @@ void QBasicHtmlExporter::emitAttribute(const char *attribute, const QString &val
 QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
 {
     QStringList closing_tags;
+    bool isHeading = false;
+    Heading cur_heading = paragraph;
 
      if (format.hasProperty(QTextFormat::FontSizeAdjustment)) {
          static const char sizeNameData[] =
@@ -248,19 +278,14 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
              name = sizeNameData + sizeNameOffsets[idx];
          }
          if (name) {
-             Heading cur_heading;
-             qDebug() << "Current format" << name;
-             //html += QLatin1String(name);
-             // Right here we are able to set headings
-             // h1 = xx-large
-             // h2 = x-large
-             // h3 = large
-             // h4 = medium
-             // h5 = small
+             cur_heading = headingType(name);
+             if (cur_heading) isHeading = true;
          }
      }
 
-     if (format.hasProperty(QTextFormat::FontWeight)
+     html += QString("<%1>").arg( headingStr(cur_heading) );
+
+     if (format.hasProperty(QTextFormat::FontWeight && !isHeading)
          && format.fontWeight() != defaultCharFormat.fontWeight()) {
          html += QLatin1String("<strong>");
          closing_tags << "</strong>";
@@ -294,6 +319,8 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
              closing_tags << "</del>";
          }
      }
+
+     html += QString("</%1>").arg( headingStr(cur_heading) );
 
      return closing_tags;
 }

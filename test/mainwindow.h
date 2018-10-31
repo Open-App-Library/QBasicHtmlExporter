@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QTextEdit>
-#include <qbasichtml.h>
+#include <qbasichtmlexporter.h>
 
 class MainWindow : public QMainWindow
 {

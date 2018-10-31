@@ -16,7 +16,10 @@ public:
 private:
     enum StyleMode { EmitStyleTag, OmitStyleTag };
     enum FrameType { TextFrame, TableFrame, RootFrame };
-    enum Heading {h1,h2,h3,h4,h5}; // Unfortunately Qt won't allow us to accurately find h6
+    enum Heading {paragraph, h1,h2,h3,h4,h5}; // Unfortunately Qt won't allow us to accurately find h6
+
+    Heading headingType(QString name);
+    QString headingStr(Heading heading);
 
     void emitFrame(const QTextFrame::Iterator &frameIt);
     void emitTextFrame(const QTextFrame *f);
