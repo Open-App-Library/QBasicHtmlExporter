@@ -5,6 +5,8 @@ Provides an alternative `toHtml()` function for `QTextDocument`s that export bas
 
 Used in [Vibrato Notes](https://vibrato.app) and the [Escriba text editor](https://gitlab.com/Open-App-Library/escriba).
 
+**Important Note**: This is not meant to be a more advanced version of Qt's HTML exporter (hence 'Basic' in the name). The HTML export provides all of the features in the markdown specfication.
+
 ## Installation
 
 There are various ways to get set up. I will share the easiest way with QMake.
