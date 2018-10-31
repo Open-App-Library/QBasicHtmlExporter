@@ -5,7 +5,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     editor = new QTextEdit(this);
-    editor->setHtml("<h1>test <em>hi</em></h1>");
+    editor->setHtml("<ul><li>tet</li></ul>");
 
     qDebug() << QBasicHtmlExporter( editor->document() ).toHtml();
 

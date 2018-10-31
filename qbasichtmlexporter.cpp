@@ -120,7 +120,6 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
 
 void QBasicHtmlExporter::emitTextFrame(const QTextFrame *f)
 {
-    FrameType frameType = f->parentFrame() ? TextFrame : RootFrame;
     html += QLatin1String("\n<table>");
     QTextFrameFormat format = f->frameFormat();
     html += QLatin1String("\n<tr>\n<td\">");
@@ -159,7 +158,7 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
             case QTextListFormat::ListUpperRoman: numbered_list = true; break;
             }
 
-            html += QString("<%1>").arg(numbered_list ? "ul" : "li");
+            html += QString("<%1>").arg(numbered_list ? "ol" : "ul");
         }
         html += QLatin1String("<li>");
         const QTextCharFormat blockFmt = formatDifference(defaultCharFormat, block.charFormat()).toCharFormat();
@@ -179,9 +178,10 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
     if (pre) {
         html += QLatin1String("<pre>");
     } else if (!list) {
-        html += QString("<%1>").arg( "" );
+        const QTextCharFormat charFmt = formatDifference(defaultCharFormat, block.charFormat()).toCharFormat();
+        QString tagname = getTagName(charFmt);
+        html += QString("<%1>").arg( tagname );
     }
-    html += "{b}";
 
     // emitBlockAttributes(block); // TAKEN OUT NOT NEEDED
 
@@ -203,14 +203,13 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
     else if (list)
         html += QLatin1String("</li>");
     else {
-        //html += QString("</%1>").arg( tagname );
+        const QTextCharFormat charFmt = formatDifference(defaultCharFormat, block.charFormat()).toCharFormat();
+        QString tagname = getTagName(charFmt);
+        html += QString("</%1>").arg( tagname );
     }
     if (list) {
         if (list->itemNumber(block) == list->count() - 1) { // last item? close list
-            if ( numbered_list )
-                html += QLatin1String("</ol>");
-            else
-                html += QLatin1String("</ul>");
+            html += QString("<%1>").arg(numbered_list ? "ol" : "ul");
         }
     }
     defaultCharFormat = oldDefaultCharFormat;
@@ -284,32 +283,6 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
 {
     QStringList closing_tags;
     bool isHeading = false;
-//    Heading cur_heading = paragraph;
-
-//    if (format.hasProperty(QTextFormat::FontSizeAdjustment)) {
-//        static const char sizeNameData[] =
-//                "small" "\0"
-//                "medium" "\0"
-//                "xx-large" ;
-//        static const quint8 sizeNameOffsets[] = {
-//            0,                                         // "small"
-//            sizeof("small"),                           // "medium"
-//            sizeof("small") + sizeof("medium") + 3,    // "large"    )
-//            sizeof("small") + sizeof("medium") + 1,    // "x-large"  )> compressed into "xx-large"
-//            sizeof("small") + sizeof("medium"),        // "xx-large" )
-//        };
-//        const char *name = nullptr;
-//        const int idx = format.intProperty(QTextFormat::FontSizeAdjustment) + 1;
-//        if (idx >= 0 && idx <= 4) {
-//            name = sizeNameData + sizeNameOffsets[idx];
-//        }
-//        if (name) {
-//            cur_heading = headingType(name);
-//            if (cur_heading) isHeading = true;
-//        }
-//    }
-
-    html += "{c}";
 
     // Opening and closing tags for paragraph or heading
     //html += QString("<%1>").arg( headingStr(cur_heading) );
