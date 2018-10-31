@@ -51,7 +51,7 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
          !it.atEnd(); ++it) {
         if (QTextFrame *f = it.currentFrame()) {
             if (QTextTable *table = qobject_cast<QTextTable *>(f)) {
-                emitTable(table);
+                //emitTable(table);
             } else {
                 emitTextFrame(f);
             }
@@ -65,10 +65,8 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
 void QBasicHtmlExporter::emitTextFrame(const QTextFrame *f)
 {
     FrameType frameType = f->parentFrame() ? TextFrame : RootFrame;
-    html += QLatin1String("\n<table");
+    html += QLatin1String("\n<table>");
     QTextFrameFormat format = f->frameFormat();
-    emitFrameStyle(format, frameType);
-    html += QLatin1Char('>');
     html += QLatin1String("\n<tr>\n<td\">");
     emitFrame(f->begin());
     html += QLatin1String("</td></tr></table>");
@@ -130,7 +128,7 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
         // html += QLatin1String("<p");
     }
 
-    emitBlockAttributes(block);
+    // emitBlockAttributes(block); // TAKEN OUT NOT NEEDED
 
     if (block.begin().atEnd())
         html += QLatin1String("<br />");
@@ -164,17 +162,75 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
     defaultCharFormat = oldDefaultCharFormat;
 }
 
-bool QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
+void QBasicHtmlExporter::emitFragment(const QTextFragment &fragment)
 {
+    const QTextCharFormat format = fragment.charFormat();
+    bool closeAnchor = false;
+    if (format.isAnchor()) {
+        const QString name = format.anchorName();
+        if (!name.isEmpty()) {
+            html += QLatin1String("<a name=\"");
+            html += name.toHtmlEscaped();
+            html += QLatin1String("\"></a>");
+        }
+        const QString href = format.anchorHref();
+        if (!href.isEmpty()) {
+            html += QLatin1String("<a href=\"");
+            html += href.toHtmlEscaped();
+            html += QLatin1String("\">");
+            closeAnchor = true;
+        }
+    }
+    QString txt = fragment.text();
+    const bool isObject = txt.contains(QChar::ObjectReplacementCharacter);
+    const bool isImage = isObject && format.isImageFormat();
+//    QLatin1String styleTag("<span style=\"");
+//    html += styleTag;
+    QStringList closing_tags = emitCharFormatStyle(format);
     bool attributesEmitted = false;
+    if (!isImage)
+        attributesEmitted = closing_tags.length();
+//    if (attributesEmitted)
+//        html += QLatin1String("\">");
+//    else
+//        html.chop(styleTag.size());
+    if (isObject) {
+        for (int i = 0; isImage && i < txt.length(); ++i) {
+            QTextImageFormat imgFmt = format.toImageFormat();
+            html += QLatin1String("<img");
+            if (imgFmt.hasProperty(QTextFormat::ImageName))
+                emitAttribute("src", imgFmt.name());
+            html += QLatin1String(" />");
+        }
+    } else {
+        Q_ASSERT(!txt.contains(QChar::ObjectReplacementCharacter));
+        txt = txt.toHtmlEscaped();
+        // split for [\n{LineSeparator}]
+        QString forcedLineBreakRegExp = QString::fromLatin1("[\\na]");
+        forcedLineBreakRegExp[3] = QChar::LineSeparator;
+        // space in BR on purpose for compatibility with old-fashioned browsers
+        html += txt.replace(QRegExp(forcedLineBreakRegExp), QLatin1String("<br />"));
+    }
+    for (int i = 0; i < closing_tags.length(); i++)
+        html += closing_tags[i];
+    if (closeAnchor)
+        html += QLatin1String("</a>");
+}
 
-     if (format.hasProperty(QTextFormat::FontPointSize)
-         && qFloor(format.fontPointSize()) != qFloor(defaultCharFormat.fontPointSize())) {
-         html += QLatin1String(" font-size:");
-         html += QString::number(format.fontPointSize());
-         html += QLatin1String("pt;");
-         attributesEmitted = true;
-     } else if (format.hasProperty(QTextFormat::FontSizeAdjustment)) {
+void QBasicHtmlExporter::emitAttribute(const char *attribute, const QString &value)
+{
+    html += QLatin1Char(' ');
+    html += QLatin1String(attribute);
+    html += QLatin1String("=\"");
+    html += value.toHtmlEscaped();
+    html += QLatin1Char('"');
+}
+
+QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
+{
+    QStringList closing_tags;
+
+     if (format.hasProperty(QTextFormat::FontSizeAdjustment)) {
          static const char sizeNameData[] =
              "small" "\0"
              "medium" "\0"
@@ -186,135 +242,58 @@ bool QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
              sizeof("small") + sizeof("medium") + 1,    // "x-large"  )> compressed into "xx-large"
              sizeof("small") + sizeof("medium"),        // "xx-large" )
          };
-         const char *name = 0;
+         const char *name = nullptr;
          const int idx = format.intProperty(QTextFormat::FontSizeAdjustment) + 1;
          if (idx >= 0 && idx <= 4) {
              name = sizeNameData + sizeNameOffsets[idx];
          }
          if (name) {
-             html += QLatin1String(" font-size:");
-             html += QLatin1String(name);
-             html += QLatin1Char(';');
-             attributesEmitted = true;
+             Heading cur_heading;
+             qDebug() << "Current format" << name;
+             //html += QLatin1String(name);
+             // Right here we are able to set headings
+             // h1 = xx-large
+             // h2 = x-large
+             // h3 = large
+             // h4 = medium
+             // h5 = small
          }
-     } else if (format.hasProperty(QTextFormat::FontPixelSize)) {
-         html += QLatin1String(" font-size:");
-         html += QString::number(format.intProperty(QTextFormat::FontPixelSize));
-         html += QLatin1String("px;");
-         attributesEmitted = true;
      }
 
      if (format.hasProperty(QTextFormat::FontWeight)
          && format.fontWeight() != defaultCharFormat.fontWeight()) {
-         html += QLatin1String(" font-weight:");
-         html += QString::number(format.fontWeight() * 8);
-         html += QLatin1Char(';');
-         attributesEmitted = true;
+         html += QLatin1String("<strong>");
+         closing_tags << "</strong>";
      }
 
      if (format.hasProperty(QTextFormat::FontItalic)
          && format.fontItalic() != defaultCharFormat.fontItalic()) {
-         html += QLatin1String(" font-style:");
-         html += (format.fontItalic() ? QLatin1String("italic") : QLatin1String("normal"));
-         html += QLatin1Char(';');
-         attributesEmitted = true;
+         html += QLatin1String("<it>");
+         closing_tags << "</it>";
      }
 
-     QLatin1String decorationTag(" text-decoration:");
-     html += decorationTag;
-     bool hasDecoration = false;
-     bool atLeastOneDecorationSet = false;
+     // UNDERLINE CODE
+//     QLatin1String decorationTag(" text-decoration:");
+//     html += decorationTag;
+//     bool hasDecoration = false;
+//     bool atLeastOneDecorationSet = false;
 
-     if ((format.hasProperty(QTextFormat::FontUnderline) || format.hasProperty(QTextFormat::TextUnderlineStyle))
-         && format.fontUnderline() != defaultCharFormat.fontUnderline()) {
-         hasDecoration = true;
-         if (format.fontUnderline()) {
-             html += QLatin1String(" underline");
-             atLeastOneDecorationSet = true;
-         }
-     }
-
-     if (format.hasProperty(QTextFormat::FontOverline)
-         && format.fontOverline() != defaultCharFormat.fontOverline()) {
-         hasDecoration = true;
-         if (format.fontOverline()) {
-             html += QLatin1String(" overline");
-             atLeastOneDecorationSet = true;
-         }
-     }
+//     if ((format.hasProperty(QTextFormat::FontUnderline) || format.hasProperty(QTextFormat::TextUnderlineStyle))
+//         && format.fontUnderline() != defaultCharFormat.fontUnderline()) {
+//         hasDecoration = true;
+//         if (format.fontUnderline()) {
+//             html += QLatin1String(" underline");
+//             atLeastOneDecorationSet = true;
+//         }
+//     }
 
      if (format.hasProperty(QTextFormat::FontStrikeOut)
          && format.fontStrikeOut() != defaultCharFormat.fontStrikeOut()) {
-         hasDecoration = true;
          if (format.fontStrikeOut()) {
-             html += QLatin1String(" line-through");
-             atLeastOneDecorationSet = true;
+             html += QLatin1String("<del>");
+             closing_tags << "</del>";
          }
      }
 
-     if (hasDecoration) {
-         if (!atLeastOneDecorationSet)
-             html += QLatin1String("none");
-         html += QLatin1Char(';');
-         attributesEmitted = true;
-     } else {
-         html.chop(decorationTag.size());
-     }
-
-     if (format.foreground() != defaultCharFormat.foreground()
-         && format.foreground().style() != Qt::NoBrush) {
-         html += QLatin1String(" color:");
-         html += colorValue(format.foreground().color());
-         html += QLatin1Char(';');
-         attributesEmitted = true;
-     }
-
-     if (format.background() != defaultCharFormat.background()
-         && format.background().style() == Qt::SolidPattern) {
-         html += QLatin1String(" background-color:");
-         html += colorValue(format.background().color());
-         html += QLatin1Char(';');
-         attributesEmitted = true;
-     }
-
-     if (format.verticalAlignment() != defaultCharFormat.verticalAlignment()
-         && format.verticalAlignment() != QTextCharFormat::AlignNormal)
-     {
-         html += QLatin1String(" vertical-align:");
-
-         QTextCharFormat::VerticalAlignment valign = format.verticalAlignment();
-         if (valign == QTextCharFormat::AlignSubScript)
-             html += QLatin1String("sub");
-         else if (valign == QTextCharFormat::AlignSuperScript)
-             html += QLatin1String("super");
-         else if (valign == QTextCharFormat::AlignMiddle)
-             html += QLatin1String("middle");
-         else if (valign == QTextCharFormat::AlignTop)
-             html += QLatin1String("top");
-         else if (valign == QTextCharFormat::AlignBottom)
-             html += QLatin1String("bottom");
-
-         html += QLatin1Char(';');
-         attributesEmitted = true;
-     }
-
-     if (format.fontCapitalization() != QFont::MixedCase) {
-         const QFont::Capitalization caps = format.fontCapitalization();
-         if (caps == QFont::AllUppercase)
-             html += QLatin1String(" text-transform:uppercase;");
-         else if (caps == QFont::AllLowercase)
-             html += QLatin1String(" text-transform:lowercase;");
-         else if (caps == QFont::SmallCaps)
-             html += QLatin1String(" font-variant:small-caps;");
-         attributesEmitted = true;
-     }
-
-     if (format.fontWordSpacing() != 0.0) {
-         html += QLatin1String(" word-spacing:");
-         html += QString::number(format.fontWordSpacing());
-         html += QLatin1String("px;");
-         attributesEmitted = true;
-     }
-
-     return attributesEmitted;
+     return closing_tags;
 }
