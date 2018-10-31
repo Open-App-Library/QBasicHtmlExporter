@@ -283,7 +283,9 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
          }
      }
 
+     // Opening and closing tags for paragraph or heading
      html += QString("<%1>").arg( headingStr(cur_heading) );
+     closing_tags << QString("</%1>").arg( headingStr(cur_heading) );
 
      if (format.hasProperty(QTextFormat::FontWeight && !isHeading)
          && format.fontWeight() != defaultCharFormat.fontWeight()) {
@@ -319,8 +321,6 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
              closing_tags << "</del>";
          }
      }
-
-     html += QString("</%1>").arg( headingStr(cur_heading) );
 
      return closing_tags;
 }
