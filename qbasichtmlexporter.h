@@ -24,6 +24,7 @@ private:
     QString getTagName(const QTextCharFormat &format);
 
     void emitFrame(const QTextFrame::Iterator &frameIt);
+    void emitTable(const QTextTable *table);
     void emitTextFrame(const QTextFrame *f);
     void emitBlock(const QTextBlock &block);
     void emitFragment(const QTextFragment &fragment);

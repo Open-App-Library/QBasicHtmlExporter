@@ -107,7 +107,7 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
          !it.atEnd(); ++it) {
         if (QTextFrame *f = it.currentFrame()) {
             if (QTextTable *table = qobject_cast<QTextTable *>(f)) {
-                //emitTable(table);
+                emitTable(table);
             } else {
                 emitTextFrame(f);
             }
@@ -116,6 +116,44 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
         }
     }
 
+}
+
+void QBasicHtmlExporter::emitTable(const QTextTable *table)
+{
+    QTextTableFormat format = table->format();
+    html += QLatin1String("\n<table>");
+    const int rows = table->rows();
+    const int columns = table->columns();
+    QVector<QTextLength> columnWidths = format.columnWidthConstraints();
+    if (columnWidths.isEmpty()) {
+        columnWidths.resize(columns);
+        columnWidths.fill(QTextLength());
+    }
+    Q_ASSERT(columnWidths.count() == columns);
+    QVarLengthArray<bool> widthEmittedForColumn(columns);
+    for (int i = 0; i < columns; ++i)
+        widthEmittedForColumn[i] = false;
+    const int headerRowCount = qMin(format.headerRowCount(), rows);
+    if (headerRowCount > 0)
+        html += QLatin1String("<thead>");
+    for (int row = 0; row < rows; ++row) {
+        html += QLatin1String("\n<tr>");
+        for (int col = 0; col < columns; ++col) {
+            const QTextTableCell cell = table->cellAt(row, col);
+            // for col/rowspans
+            if (cell.row() != row)
+                continue;
+            if (cell.column() != col)
+                continue;
+            html += QLatin1String("\n<td>");
+            emitFrame(cell.begin());
+            html += QLatin1String("</td>");
+        }
+        html += QLatin1String("</tr>");
+        if (headerRowCount > 0 && row == headerRowCount - 1)
+            html += QLatin1String("</thead>");
+    }
+    html += QLatin1String("</table>");
 }
 
 void QBasicHtmlExporter::emitTextFrame(const QTextFrame *f)

@@ -1,11 +1,13 @@
 #include "mainwindow.h"
 #include <QDebug>
 
+// TODO: Proper unit testing
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     editor = new QTextEdit(this);
-    editor->setHtml("<ul><li>tet</li></ul>");
+    editor->setHtml("<h1>Test!</h1>");
 
     qDebug() << QBasicHtmlExporter( editor->document() ).toHtml();
 
