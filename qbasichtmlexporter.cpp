@@ -32,17 +32,17 @@ QString QBasicHtmlExporter::toHtml()
 {
     html = QLatin1String("");
     emitFrame(doc->rootFrame()->begin());
-
+    html.remove(QRegExp("^[\r\n]+"));
     return html;
 }
 
 QBasicHtmlExporter::Heading QBasicHtmlExporter::headingType(QString name)
 {
-    if (QString::compare(name, "xx-large", Qt::CaseInsensitive)) return h1;
-    if (QString::compare(name, "x-large", Qt::CaseInsensitive))  return h2;
-    if (QString::compare(name, "large", Qt::CaseInsensitive))    return h3;
-    if (QString::compare(name, "medium", Qt::CaseInsensitive))   return h4;
-    if (QString::compare(name, "small", Qt::CaseInsensitive))    return h5;
+    if ( name == "xx-large" ) return h1;
+    if ( name == "x-large" )  return h2;
+    if ( name == "large" )    return h3;
+    if ( name == "medium" )   return h4;
+    if ( name == "small" )    return h5;
     return paragraph;
 }
 
@@ -164,12 +164,12 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
     QTextBlock::Iterator it = block.begin();
 
     // IDK WHAT THIS IS
-    if (fragmentMarkers && !it.atEnd() && block == doc->begin())
-        html += QLatin1String("<!--StartFragment-->");
+//    if (fragmentMarkers && !it.atEnd() && block == doc->begin())
+//        html += QLatin1String("<!--StartFragment-->");
     for (; !it.atEnd(); ++it)
         emitFragment(it.fragment());
-    if (fragmentMarkers && block.position() + block.length() == doc->docHandle()->length())
-        html += QLatin1String("<!--EndFragment-->");
+//    if (fragmentMarkers && block.position() + block.length() == doc->docHandle()->length())
+//        html += QLatin1String("<!--EndFragment-->");
 
     if (pre)
         html += QLatin1String("</pre>");
