@@ -21,6 +21,8 @@ private:
     Heading headingType(QString name);
     QString headingStr(Heading heading);
 
+    QString getTagName(const QTextCharFormat &format);
+
     void emitFrame(const QTextFrame::Iterator &frameIt);
     void emitTextFrame(const QTextFrame *f);
     void emitBlock(const QTextBlock &block);
