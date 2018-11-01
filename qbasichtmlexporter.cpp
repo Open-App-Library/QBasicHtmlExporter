@@ -32,7 +32,10 @@ QString QBasicHtmlExporter::toHtml()
 {
     html = QLatin1String("");
     emitFrame(doc->rootFrame()->begin());
+
+    // Remove newlines at beginning
     html.remove(QRegExp("^[\r\n]+"));
+
     return html;
 }
 
