@@ -224,10 +224,9 @@ void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
         html += QString("<%1>").arg( tagname );
     }
 
-    // emitBlockAttributes(block); // TAKEN OUT NOT NEEDED
-
-    if (block.begin().atEnd())
-        html += QLatin1String("<br />");
+		// Uncomment to enable <br>s
+    // if (block.begin().atEnd())
+    //     html += QLatin1String("<br />");
 
     QTextBlock::Iterator it = block.begin();
 
@@ -323,19 +322,27 @@ void QBasicHtmlExporter::emitAttribute(const char *attribute, const QString &val
 QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
 {
     QStringList closing_tags;
-    bool isHeading = false;
+		QRegExp heading_tag_regex("h\\d");
+    bool isHeading = heading_tag_regex.exactMatch( getTagName(format) );
 
     // Opening and closing tags for paragraph or heading
     //html += QString("<%1>").arg( headingStr(cur_heading) );
 
-    if (format.hasProperty(QTextFormat::FontWeight && !isHeading)
-            && format.fontWeight() != defaultCharFormat.fontWeight()) {
-        html += QLatin1String("<strong>");
-        closing_tags << "</strong>";
-    }
+		int fontWeight = format.fontWeight();
+		bool isBold = fontWeight > defaultCharFormat.fontWeight();
+		if (!isBold) { // Not bold? Let's quickly check to make sure there is not a fontweight property.
+			if (format.hasProperty(QTextFormat::FontWeight && !isHeading)
+					&& format.fontWeight() != defaultCharFormat.fontWeight()) {
+				isBold = true;
+			}
+		}
+		if (isBold && !isHeading) {
+			html += QLatin1String("<strong>");
+			closing_tags << "</strong>";
+		}
 
     if (format.hasProperty(QTextFormat::FontItalic)
-            && format.fontItalic() != defaultCharFormat.fontItalic()) {
+            && format.fontItalic() != defaultCharFormat.fontItalic())  {
         html += QLatin1String("<em>");
         closing_tags << "</em>";
         isHeading = false;
@@ -356,8 +363,8 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
     //         }
     //     }
 
-    if (format.hasProperty(QTextFormat::FontStrikeOut)
-            && format.fontStrikeOut() != defaultCharFormat.fontStrikeOut()) {
+    if (format.hasProperty(QTextFormat::FontStrikeOut) ||
+        format.fontStrikeOut()) {
         if (format.fontStrikeOut()) {
             html += QLatin1String("<del>");
             closing_tags << "</del>";
