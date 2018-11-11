@@ -16,7 +16,7 @@ First, you need to clone the repo to your project folder.
 Then, you just have to add the following lines to your `.pro` file:
 
 ```
-include($$PWD/QBasicHtmlExporter/QBasicHtmlExporter.pro)
+include($$PWD/QBasicHtmlExporter/QBasicHtmlExporterInclude.pro)
 INCLUDEPATH += $$PWD/QBasicHtmlExporter
 ```
 
