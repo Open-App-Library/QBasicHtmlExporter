@@ -3,6 +3,8 @@
 #include <QTextDocument>
 #include <QTextList>
 #include <QtMath>
+
+// PRIVATE CLASS, OH NO! Will try to replace this as soon as I can.
 #include "private/qtextdocumentfragment_p.h"
 
 static QTextFormat formatDifference(const QTextFormat &from, const QTextFormat &to)
