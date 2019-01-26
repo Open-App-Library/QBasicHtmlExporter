@@ -4,8 +4,10 @@
 #include <QTextList>
 #include <QtMath>
 
-// PRIVATE CLASS, OH NO! Will try to replace this as soon as I can.
-#include "private/qtextdocumentfragment_p.h"
+#include <QTextTable>
+#include <QTextTableFormat>
+
+#include <QDebug>
 
 static QTextFormat formatDifference(const QTextFormat &from, const QTextFormat &to)
 {
@@ -123,7 +125,7 @@ void QBasicHtmlExporter::emitFrame(const QTextFrame::Iterator &frameIt)
 }
 
 void QBasicHtmlExporter::emitTable(const QTextTable *table)
-{
+{ 
 	QTextTableFormat format = table->format();
 	html += QLatin1String("\n<table>");
 	const int rows = table->rows();
@@ -171,17 +173,6 @@ void QBasicHtmlExporter::emitTextFrame(const QTextFrame *f)
 
 void QBasicHtmlExporter::emitBlock(const QTextBlock &block)
 {
-	if (block.begin().atEnd()) {
-		// ### HACK, remove once QTextFrame::Iterator is fixed
-		int p = block.position();
-		if (p > 0)
-			--p;
-		QTextDocumentPrivate::FragmentIterator frag = doc->docHandle()->find(p);
-		QChar ch = doc->docHandle()->buffer().at(frag->stringPosition);
-		if (ch == QTextBeginningOfFrame
-				|| ch == QTextEndOfFrame)
-			return;
-	}
 	html += QLatin1Char('\n');
 	// save and later restore, in case we 'change' the default format by
 	// emitting block char format information
