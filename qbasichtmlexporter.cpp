@@ -38,7 +38,7 @@ QString QBasicHtmlExporter::toHtml()
 	emitFrame(doc->rootFrame()->begin());
 
 	// Remove newlines at beginning
-	html.remove(QRegExp("^[\r\n]+"));
+        html.remove(QRegularExpression("^[\r\n]+"));
 
 	return html;
 }
@@ -256,7 +256,7 @@ void QBasicHtmlExporter::emitFragment(const QTextFragment &fragment)
 	const QTextCharFormat format = fragment.charFormat();
 	bool closeAnchor = false;
 	if (format.isAnchor()) {
-		const QString name = format.anchorName();
+                const QString name = format.anchorNames().first();
 		if (!name.isEmpty()) {
 			html += QLatin1String("<a name=\"");
 			html += name.toHtmlEscaped();
@@ -298,7 +298,7 @@ void QBasicHtmlExporter::emitFragment(const QTextFragment &fragment)
 		QString forcedLineBreakRegExp = QString::fromLatin1("[\\na]");
 		forcedLineBreakRegExp[3] = QChar::LineSeparator;
 		// space in BR on purpose for compatibility with old-fashioned browsers
-		html += txt.replace(QRegExp(forcedLineBreakRegExp), QLatin1String("<br />"));
+                html += txt.replace(QRegularExpression(forcedLineBreakRegExp), QLatin1String("<br />"));
 	}
 	for (int i = 0; i < closing_tags.length(); i++)
 		html += closing_tags[i];
@@ -318,8 +318,8 @@ void QBasicHtmlExporter::emitAttribute(const char *attribute, const QString &val
 QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &format)
 {
 	QStringList closing_tags;
-	QRegExp heading_tag_regex("h\\d");
-	bool isHeading = heading_tag_regex.exactMatch( getTagName(format) );
+        QRegularExpression heading_tag_regex("h\\d");
+        bool isHeading = heading_tag_regex.match( getTagName(format) ).hasMatch();
 
 	int fontWeight = format.fontWeight();
 	bool isBold = fontWeight > defaultCharFormat.fontWeight();
@@ -331,18 +331,18 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
 	}
 	if (isBold && !isHeading) {
 		html += QLatin1String("<strong>");
-		closing_tags << "</strong>";
+            closing_tags.prepend("</strong>");
 	}
 
 	if (format.hasProperty(QTextFormat::FontItalic)
 			&& format.fontItalic() != defaultCharFormat.fontItalic())  {
 		html += QLatin1String("<em>");
-		closing_tags << "</em>";
+            closing_tags.prepend("</em>");
 		isHeading = false;
 	}
 
 	// UNDERLINE CODE
-	//     QLatin1String decorationTag(" text-decoration:");
+        //     QLatin1String decorationTag(" text-decoration:");
 	//     html += decorationTag;
 	//     bool hasDecoration = false;
 	//     bool atLeastOneDecorationSet = false;
@@ -356,11 +356,25 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
 	//         }
 	//     }
 
+    if (format.hasProperty(QTextFormat::FontUnderline) || format.fontUnderline()) {
+        if (format.fontUnderline()) {
+            html += QLatin1String("<u>");
+            closing_tags.prepend("</u>");
+        }
+    }
+
+    if (format.hasProperty(QTextFormat::FontFixedPitch) || format.fontFixedPitch()) {
+        if (format.fontFixedPitch()) {
+            html += QLatin1String("<code>");
+            closing_tags.prepend("</code>");
+        }
+    }
+
 	if (format.hasProperty(QTextFormat::FontStrikeOut) ||
 			format.fontStrikeOut()) {
 		if (format.fontStrikeOut()) {
 			html += QLatin1String("<del>");
-			closing_tags << "</del>";
+                    closing_tags.prepend("</del>");
 		}
 	}
 

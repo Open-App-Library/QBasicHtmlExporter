@@ -2,6 +2,7 @@
 #define QBASICHTML_H
 #include <QTextDocument>
 #include <QTextFrame>
+#include <QRegularExpression>
 
 class QBasicHtmlExporter
 {
