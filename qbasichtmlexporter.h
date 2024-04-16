@@ -3,6 +3,7 @@
 #include <QTextDocument>
 #include <QTextFrame>
 #include <QRegularExpression>
+#include <QFontInfo>
 
 class QBasicHtmlExporter
 {
