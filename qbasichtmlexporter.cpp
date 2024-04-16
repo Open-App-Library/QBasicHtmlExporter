@@ -256,7 +256,7 @@ void QBasicHtmlExporter::emitFragment(const QTextFragment &fragment)
   const QTextCharFormat format = fragment.charFormat();
   bool closeAnchor = false;
   if (format.isAnchor()) {
-    const QString name = !format.anchorNames().isEmpty() ? format.anchorNames().first() : "";
+                const QString name = !format.anchorNames().isEmpty() ? format.anchorNames().first() : "";
     if (!name.isEmpty()) {
       html += QLatin1String("<a name=\"");
       html += name.toHtmlEscaped();
@@ -365,8 +365,10 @@ QStringList QBasicHtmlExporter::emitCharFormatStyle(const QTextCharFormat &forma
 
         QFontInfo fontInfo(format.font());
         if (format.hasProperty(QTextFormat::FontFixedPitch) || format.fontFixedPitch() || fontInfo.fixedPitch()) {
+            if (format.fontFixedPitch() || fontInfo.fixedPitch()) {
                 html += QLatin1String("<code>");
                 closing_tags.prepend("</code>");
+            }
         }
 
   if (format.hasProperty(QTextFormat::FontStrikeOut) ||
